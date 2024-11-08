@@ -17,7 +17,7 @@ public class S {
         String aStar = "fr.uga.pddl4j.planners.ASP";
 
         for (int domainIndex = 1; domainIndex <= 10; domainIndex++) {
-            String problem = "0"+domainIndex+".pddl";
+            String problem = domainIndex+".pddl";
         
             
         String className = mctsOuAsp ? mcts : aStar;
