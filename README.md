@@ -5,4 +5,5 @@
 ( un exemple de domaine et de problème étant ".\src\test\resources\adl\domain.pddl" pour le domaine et ".\src\test\resources\benchmarks\pddl\ipc1998\logistics\adl\p01.pddl" )
 - les types de problèmes sont disponibles dans le dossier src/test/
 
+Les comparaisons et les graphiques sont dans le notebook stat.ipynb
  

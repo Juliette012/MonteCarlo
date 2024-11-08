@@ -10,10 +10,10 @@ public class S {
         // Définition des variables pour la commande
         String domain = "domain.pddl";
         String problem = "01.pddl";
-        String lien = "./src/test/resources/benchmarks/pddl/";
-        String lien2 = "ipc2000/blocks/strips-typed/";
+        String lien = ".\\src\\test\\resources\\benchmarks\\pddl\\";
+        String lien2 = "ipc2000\\blocks\\strips-typed\\";
         boolean mctsOuAsp = true;
-        String mcts = "fr.uga.pddl4j.examples.mcts.MCTS";
+        String mcts = "fr.uga.pddl4j.examples.asp.MCTS";
         String aStar = "fr.uga.pddl4j.planners.ASP";
 
         // Construction de la commande en fonction de mctsOuAsp
@@ -23,21 +23,47 @@ public class S {
         try {
             // Utilisation de ProcessBuilder pour exécuter la commande dans PowerShell
             ProcessBuilder processBuilder = new ProcessBuilder("powershell", "-Command", command);
-            System.out.println("Exécution de la commande: " + command);
 
             // Lancement de la commande
             Process process = processBuilder.start();
+            System.out.println("Exécution de la commande: " + command);
+            System.out.println("Sortie de la commande:\n");
 
-            // Récupération de la sortie de la commande
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            // Threads pour lire la sortie standard et le flux d'erreur en parallèle
             StringBuilder output = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
-            }
 
-            // Attendre que le processus se termine
+            Thread outputThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        output.append(line).append("\n");
+                        System.out.println("OUTPUT: " + line); // Affichage de la sortie standard en direct
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            Thread errorThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.err.println("ERROR: " + line); // Affichage du flux d'erreur en direct
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            // Lancer les threads pour lire les sorties
+            outputThread.start();
+            errorThread.start();
+
+            // Attendre la fin du processus et des threads de sortie
             int exitCode = process.waitFor();
+            outputThread.join();
+            errorThread.join();
+
             if (exitCode == 0) {
                 System.out.println("La commande a été exécutée avec succès!");
 
@@ -65,7 +91,7 @@ public class S {
                 } catch (IOException e) {
                     System.err.println("Erreur lors de l'écriture dans le fichier : " + e.getMessage());
                 }
-                
+
             } else {
                 System.out.println("Erreur lors de l'exécution de la commande, code de sortie : " + exitCode);
             }
