@@ -3,26 +3,36 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.File;
 
 public class S {
 
     public static void main(String[] args) {
         // Définition des variables pour la commande
         String domain = "domain.pddl";
-        String problem = "01.pddl";
         String lien = ".\\src\\test\\resources\\benchmarks\\pddl\\";
         String lien2 = "ipc2000\\blocks\\strips-typed\\";
         boolean mctsOuAsp = true;
-        String mcts = "fr.uga.pddl4j.examples.asp.MCTS";
+                String mcts = "fr.uga.pddl4j.examples.asp.MCTS";
         String aStar = "fr.uga.pddl4j.planners.ASP";
 
-        // Construction de la commande en fonction de mctsOuAsp
-        String command = "java -cp \"classes;lib/pddl4j-4.0.0.jar\" " +
-                (mctsOuAsp ? mcts : aStar) + " " + lien + lien2 + domain + " " + lien + lien2 + "p0" + problem;
-
+        for (int domainIndex = 1; domainIndex <= 10; domainIndex++) {
+            String problem = "0"+domainIndex+".pddl";
+        
+            
+        String className = mctsOuAsp ? mcts : aStar;
+        String[] command = {
+            "java",
+            "-cp",
+            "classes;lib/pddl4j-4.0.0.jar",
+            className,
+            lien + lien2 + domain,
+            lien + lien2 + "p0" + problem
+        };
         try {
             // Utilisation de ProcessBuilder pour exécuter la commande dans PowerShell
-            ProcessBuilder processBuilder = new ProcessBuilder("powershell", "-Command", command);
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.directory(new File("C:\\Users\\jujud\\OneDrive\\Bureau\\M2\\programationAuto\\TP2\\MCTS"));
 
             // Lancement de la commande
             Process process = processBuilder.start();
@@ -73,16 +83,21 @@ public class S {
                 String lineBeforeTimeSpent = null;
 
                 for (int i = 0; i < lines.length; i++) {
-                    if (lines[i].contains("Total time")) {
+                    if (lines[i].contains("total time")) {
                         totalTimeLine = lines[i];
                     }
-                    if (i > 0 && lines[i].contains("Time spent")) {
-                        lineBeforeTimeSpent = lines[i - 1];
+                    if (i > 0 && lines[i].contains("time spent:")) {
+                        lineBeforeTimeSpent = lines[i - 2].substring(0, 1);
+                        
+                        int lineBeforeTimeSpentInt = Integer.parseInt(lineBeforeTimeSpent) + 1;
+                        System.out.println("Nombre d'actions: " + lineBeforeTimeSpentInt);
+                        lineBeforeTimeSpent = Integer.toString(lineBeforeTimeSpentInt);
                     }
                 }
 
                 // Écriture dans le fichier stat.txt
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter("stat.txt"))) {
+
                     writer.write(mctsOuAsp ? "MCTS\n" : "A*\n");
                     writer.write("Domaine: " + domain + ", Problème: " + problem + "\n");
                     writer.write("Total time: " + (totalTimeLine != null ? totalTimeLine : "Non trouvé") + "\n");
@@ -98,5 +113,7 @@ public class S {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+        
     }
+}
 }
